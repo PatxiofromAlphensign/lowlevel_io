@@ -8,7 +8,6 @@ class formatting:
     @classmethod
     def get_values_fmt(cls,fmt):
         ret = []
-        _ret = []
         for val in ("l", "h"):
             ret.append([1 for i in range(len(fmt.split(val)) - 1)])
         return ret[0] + ret[1]
@@ -38,6 +37,19 @@ class formatting:
 class DevCtl:
     def __init__(self, fd):
         self._fd = fd
+        self.ids  =  self.nums()  
+
+    def nums(self):
+        i = 0
+        ret = [2]
+        while i < 1e6:
+            try:
+                fcnlt.ioctl(self._fd.fileno(), i, "test")
+                ret.append(i)
+            except:
+                pass
+            i+=1
+        return ret
 
     def fcntl(self):
         self.fd = fd = tempfile.SpooledTemporaryFile()
@@ -65,6 +77,7 @@ def packer(fmt):
         x, = getattr(fmt , "_fmt_"+f)()
         ret.append(x)
     return ret
-    
-print(packer("lllllhhhh"))
+
+if __name__ == "__main__":
+    print(packer("lllllhhhh"))
 
