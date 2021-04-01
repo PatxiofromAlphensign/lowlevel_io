@@ -1,18 +1,49 @@
-import io, struct, fcntl
+import io, struct, fcntl, tempfile
 from packer import DevCtl, formatting
-import socket
+import socket, os
 
-class IO:
+def down_to_child(r,w): # TODO implement formatting and struct packing of messages between threads
+    os.close(r)
+    os.write(w, b"tetw") 
+
+class IO(io.BytesIO):
     def __init__(self, buf):
         buf = io.BytesIO(buf)
         self._io = io.TextIOWrapper(buf)
         self.dev = DevCtl(buf)
         self.size = self._io.read().__len__()
-        # self.__io.ioctl()
+        self._io.seek(0)
+        self.tmp_file = tempfile.SpooledTemporaryFile()
+        self.tmp_file.write(self._io.read().encode())
+        self.fileno = self.tmp_file.fileno()
+
+    def pipe(self):
+        fn = fcntl.fcntl(self.tmp_file,1,1)
+        pid = os.fork() 
+        r,w = os.pipe()
+        if pid > 0: 
+            os.write(fn, b"test")
+        else:
+            c = 1
+            while 1:
+                os.read(r,117)
+                c+=1 
+
+    def child_parent(self):
+        r,w = os.pipe()
+        pid = os.fork()
+        if pid > 0:
+            down_to_child(r,w)
+        else:
+            os.close(w)
+            r = os.fdopen(r)
+            print(r.read())
 
 def main():
     buf =struct.pack("l", 1)
     _io = io.BytesIO(buf)
-    fmt= formatting(_io)
-    io = IO(buf)
-    fcntl.ioctl(2,2,"")
+    fmt=formatting(_io)
+    Io = IO(buf)
+    Io.child_parent()
+
+main()
