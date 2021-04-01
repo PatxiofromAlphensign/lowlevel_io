@@ -22,11 +22,13 @@ class IO(io.BytesIO):
         pid = os.fork() 
         r,w = os.pipe()
         if pid > 0: 
-            os.write(fn, b"test")
+            os.write(w, b"test")
         else:
             c = 1
+            os.close(w)
             while 1:
-                os.read(r,117)
+                val = os.read(r,c)
+                print(val)
                 c+=1 
 
     def child_parent(self):
@@ -44,6 +46,6 @@ def main():
     _io = io.BytesIO(buf)
     fmt=formatting(_io)
     Io = IO(buf)
-    Io.child_parent()
+    Io.pipe()
 
 main()
